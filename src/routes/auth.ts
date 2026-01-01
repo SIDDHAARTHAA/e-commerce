@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { login } from "../controllers/auth.js";
+import { login, signup } from "../controllers/auth.js";
+import { errorHandler } from "../error-handler.js";
 
-const authRoutes:Router = Router();
+const authRoutes: Router = Router();
 
-authRoutes.get('/login', login);
+authRoutes.post('/login', errorHandler(login));
+authRoutes.post('/signup', errorHandler(signup));
+
 
 export default authRoutes;

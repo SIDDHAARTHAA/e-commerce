@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import pkg from "pg"
+import { signupSchema } from "./schema/users.js"
 
 const { Pool } = pkg
 
