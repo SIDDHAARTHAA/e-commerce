@@ -13,27 +13,37 @@ enum Role {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  role      Role      @default(USER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  defaultShippingAddressId Int?     @unique
+  defaultShippingAddress   Address? @relation(name: "DefaultShippingAddress", fields: [defaultShippingAddressId], references: [id])
+
   addresses Address[]
+  cartItems CartItems[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
 model Address {
-  id        Int      @id @default(autoincrement())
-  lineOne   String
-  lineTwo   String?
-  city      String
-  country   String
-  pincode   String
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  id      Int     @id @default(autoincrement())
+  lineOne String
+  lineTwo String?
+  city    String
+  country String
+  pincode String
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  defaultForUser User? @relation(name: "DefaultShippingAddress")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -41,13 +51,31 @@ model Address {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
-  description String   @db.Text
+  description String  @db.Text
   price       Decimal
   tags        String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  cartItems CartItems[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("products")
+}
+
+model CartItems {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  quantity  Int
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@map("cart_items")
 }

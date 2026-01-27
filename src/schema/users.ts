@@ -5,3 +5,8 @@ export const signupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6)
 })
+
+export const updateUserSchema = z.object({
+    name: z.string().optional(),
+    defaultShippingAddressId: z.number().nullable().optional(),
+});
