@@ -18,6 +18,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
         }
     })
 
+
     if (user) {
         return next(new BadRequestException("User already exists!", ErrorCode.USER_ALREADY_EXISTS))
     }
