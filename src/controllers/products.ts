@@ -55,18 +55,42 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 }
 export const listProducts = async (req: Request, res: Response) => {
-    let skip;
+    let skip: number;
+    let whereClause = {};
+
     if (!req.query.skip) {
         skip = 0
     } else {
-        skip = req.query.skip
+        skip = +req.query.skip!
     }
 
-    const count = await prisma.product.count();
+    if (req.query.q) {
+        whereClause = {
+            OR: [
+                {
+                    name: {
+                        contains: req.query.q.toString()
+                    }
+                },
+                {
+                    description: {
+                        contains: req.query.q.toString()
+                    }
+                }
+            ]
+        }
+    }
+
+    const count = await prisma.product.count({
+        where: whereClause
+    });
+    console.log("Product count:", count)
+    console.log("Where clause:", JSON.stringify(whereClause))
 
     const products = await prisma.product.findMany({
-        skip: +skip,
-        take: 5
+        skip: skip,
+        take: 5,
+        where: whereClause
     })
 
     res.json({

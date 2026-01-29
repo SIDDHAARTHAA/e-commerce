@@ -103,3 +103,67 @@ export const updateUser = async (req: Request, res: Response) => {
 
     res.json(updatedUser);
 };
+
+export const listUsers = async (req: Request, res: Response) => {
+    let skip: number = 0;
+    if (req.query.skip) {
+        skip = +req.query.skip!
+    }
+    const users = await prisma.user.findMany({
+        skip: skip,
+        take: 5,
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+            defaultShippingAddress: true
+        }
+    })
+
+    const count = await prisma.user.count()
+
+    res.json({ count, data: users })
+}
+
+export const getUserById = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            throw new NotFoundException("User ID not found", ErrorCode.USER_NOT_FOUND)
+        }
+        const user = await prisma.user.findFirstOrThrow({
+            where: {
+                id: +userId
+            },
+            include: {
+                addresses: true
+            }
+        })
+        res.json(user)
+    } catch (err) {
+        throw new NotFoundException("User not found", ErrorCode.USER_NOT_FOUND)
+    }
+}
+
+export const changeUserRole = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            throw new NotFoundException("User ID not found", ErrorCode.USER_NOT_FOUND)
+        }
+        const user = await prisma.user.update({
+            where: {
+                id: +userId
+            },
+            data: {
+                role: req.body.role
+            }
+        })
+        res.json(user)
+    } catch (err) {
+        throw new NotFoundException("User not found", ErrorCode.USER_NOT_FOUND)
+    }
+}
