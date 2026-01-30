@@ -7,6 +7,114 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                       Int         @id @default(autoincrement())
+  name                     String
+  email                    String      @unique
+  password                 String
+  role                     Role        @default(USER)
+  defaultShippingAddressId Int?        @unique
+  createdAt                DateTime    @default(now())
+  updatedAt                DateTime    @updatedAt
+  addresses                Address[]
+  cartItems                CartItems[]
+  orders                   Order[]
+  defaultShippingAddress   Address?    @relation("DefaultShippingAddress", fields: [defaultShippingAddressId], references: [id])
+
+  @@map("users")
+}
+
+model Address {
+  id             Int      @id @default(autoincrement())
+  lineOne        String
+  lineTwo        String?
+  city           String
+  country        String
+  pincode        String
+  userId         Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
+  defaultForUser User?    @relation("DefaultShippingAddress")
+
+  @@index([userId], map: "addresses_userId_fkey")
+  @@map("addresses")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String      @db.Text
+  price       Decimal
+  tags        String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  cartItems   CartItems[]
+
+  @@map("products")
+}
+
+model CartItems {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  quantity  Int
+  productId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, productId])
+  @@index([productId], map: "cart_items_productId_fkey")
+  @@map("cart_items")
+}
+
+model Order {
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  netAmount       Decimal
+  shippingLineOne String
+  shippingLineTwo String?
+  shippingCity    String
+  shippingCountry String
+  shippingPincode String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  orderEvents     OrderEvent[]
+  orderProducts   OrderProduct[]
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "orders_userId_fkey")
+  @@map("orders")
+}
+
+model OrderProduct {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  name      String
+  price     Decimal
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@index([orderId], map: "order_products_orderId_fkey")
+  @@map("order_products")
+}
+
+model OrderEvent {
+  id        Int              @id @default(autoincrement())
+  orderId   Int
+  status    OrderEventStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  order     Order            @relation(fields: [orderId], references: [id])
+
+  @@index([orderId], map: "order_events_orderId_fkey")
+  @@map("order_events")
+}
+
 enum Role {
   ADMIN
   USER
@@ -18,121 +126,4 @@ enum OrderEventStatus {
   OUT_FOR_DELIVERY
   DELIVERY
   CANCELLED
-}
-
-model User {
-  id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique
-  password String
-  role     Role   @default(USER)
-
-  defaultShippingAddressId Int?     @unique
-  defaultShippingAddress   Address? @relation(name: "DefaultShippingAddress", fields: [defaultShippingAddressId], references: [id])
-
-  addresses Address[]
-  cartItems CartItems[]
-  orders    Order[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
-}
-
-model Address {
-  id      Int     @id @default(autoincrement())
-  lineOne String
-  lineTwo String?
-  city    String
-  country String
-  pincode String
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
-
-  defaultForUser User? @relation(name: "DefaultShippingAddress")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("addresses")
-}
-
-model Product {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String  @db.Text
-  price       Decimal
-  tags        String
-
-  cartItems CartItems[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("products")
-}
-
-model CartItems {
-  id        Int     @id @default(autoincrement())
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id])
-  quantity  Int
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, productId])
-  @@map("cart_items")
-}
-
-model Order {
-  id        Int     @id @default(autoincrement())
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id])
-  netAmount Decimal
-
-  shippingLineOne String
-  shippingLineTwo String?
-  shippingCity    String
-  shippingCountry String
-  shippingPincode String
-
-  orderProducts OrderProduct[]
-  orderEvents   OrderEvent[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("orders")
-}
-
-model OrderProduct {
-  id      Int   @id @default(autoincrement())
-  orderId Int
-  order   Order @relation(fields: [orderId], references: [id])
-
-  productId Int
-  name      String
-  price     Decimal
-  quantity  Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("order_products")
-}
-
-model OrderEvent {
-  id        Int              @id @default(autoincrement())
-  orderId   Int
-  order     Order            @relation(fields: [orderId], references: [id])
-  status    OrderEventStatus @default(PENDING)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-
-  @@map("order_events")
 }
