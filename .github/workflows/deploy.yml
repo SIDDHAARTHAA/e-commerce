@@ -1,8 +1,9 @@
-name: EC2 Deploy (Step 2: Path Check)
+name: EC2 Deploy
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -15,7 +16,7 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      - name: SSH and verify project directory
+      - name: Verify project directory
         run: |
           ssh -4 \
             -o StrictHostKeyChecking=no \
