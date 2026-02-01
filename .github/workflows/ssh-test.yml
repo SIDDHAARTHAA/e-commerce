@@ -2,7 +2,7 @@ name: SSH Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   ssh-test:
@@ -15,7 +15,11 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-
       - name: SSH into EC2 and verify user
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "whoami && hostname"
+          ssh -4 \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=10 \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "whoami && hostname"
