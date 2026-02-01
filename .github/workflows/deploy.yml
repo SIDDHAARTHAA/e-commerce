@@ -16,11 +16,22 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      - name: Verify project directory
+      - name: Deploy to EC2
         run: |
           ssh -4 \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -o ConnectTimeout=10 \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "cd /home/ubuntu/e-commerce && pwd && ls"
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+              set -e
+              cd /home/ubuntu/e-commerce
+              echo "Pulling latest code..."
+              git pull origin main
+              echo "Installing dependencies..."
+              npm ci
+              echo "Building app..."
+              npm run build
+              echo "Reloading PM2 app..."
+              pm2 reload e-commerce
+              echo "Deploy complete."
+          EOF
